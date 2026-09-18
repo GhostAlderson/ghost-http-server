@@ -1,36 +1,38 @@
 from http.server import BaseHTTPRequestHandler as AHandler , HTTPServer as EServer 
 from urllib.parse import urlparse , parse_qs
 import base64
+import random
+sessions = {}
 class H(AHandler):
     def do_POST(self):
-        length = int (self.headers["content-length"])
-        body = self.rfile.read(length)
-        mehra = body.decode()
-        print (length)
-        parts = mehra.split("&")
-        username = ("")
-        password = ("")
-        role = ("")
-        for part in parts:
-         nano = part.split("=")
-         if nano[0] == "username":
-          username = nano[1]
-         elif nano[0] == "password":
-          password = nano[1]
-         elif nano[0] == "role":
-          role = nano[1]
-        if (username == "ghost" or username == "alderson") and (password == "1234") and (role == "admin"):
-         self.send_response(200)
-         self.send_header("content-type" , "text/html")
-         self.end_headers()
-         self.wfile.write("welcome".encode())
-         print ("welcome")
-        else:
-         self.send_response(401)
-         self.send_header("content-type" , "text/html")
-         self.end_headers()
-         self.wfile.write("error".encode())
-         print ("error")
+      length = int (self.headers["content-length"])
+      body = self.rfile.read(length)
+      mehra = body.decode()
+      print (length)
+      parts = mehra.split("&")
+      username = ("")
+      password = ("")
+      role = ("")
+      for part in parts:
+       nano = part.split("=")
+       if nano[0] == "username":
+        username = nano[1]
+       elif nano[0] == "password":
+        password = nano[1]
+       elif nano[0] == "role":
+        role = nano[1]
+       if (username == "ghost" or username == "alderson") and (password == "1234") and (role == "admin"):
+        self.send_response(200)
+        self.send_header("content-type" , "text/html")
+        self.end_headers()
+        self.wfile.write("welcome".encode())
+        print ("welcome")
+       else:
+        self.send_response(401)
+        self.send_header("content-type" , "text/html")
+        self.end_headers()
+        self.wfile.write("error".encode())
+        print ("error") 
     def do_GET(self):
         auth = self.headers["authorization"]
         pim = auth.split(" ")
@@ -39,6 +41,23 @@ class H(AHandler):
         now = decoded.split(":")
         if now[0] == "ghost" and now[1] == "1234":
          print (" agree  authorization")
+         cookie = self.headers.get("cookie")
+         if cookie:
+          session_ll = cookie.split("=")[1]
+          if session_ll in sessions:
+           username = sessions[session_ll]
+           print ("session valid")
+           session_ok = True
+          else:
+           session_id = str (random.randint(100000 , 999999))
+           sessions[session_id] = now[0]
+           session_ok = True
+           print ("new seesion created")
+         else:
+          session_id = str (random.randint(100000 , 999999))
+          sessions[session_id] = now[0]
+          session_ok = True
+          print ("new seesion created")
          parsed = urlparse(self.path)
          params = parse_qs(parsed.query)
          if "q" in params:
@@ -65,9 +84,10 @@ class H(AHandler):
          else:
           print ("no page in params")
           page_ok = False
-         if q_ok and page_ok:
+         if q_ok and page_ok and session_ok:
           self.send_response(200)
           self.send_header("content-type" , "text/html")
+          self.send_header("set-cookie" , "session_id=" + session_ll)
           self.end_headers()
           self.wfile.write("request processed successfully".encode())
         else:
