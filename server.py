@@ -39,20 +39,24 @@ class H(AHandler):
         eli = base64.b64decode(pim[1])
         decoded = eli.decode()
         now = decoded.split(":")
+        q_ok = False
+        page_ok = False
+        auth_ok = False
+        session_ok = False
         if now[0] == "ghost" and now[1] == "1234":
+         auth_ok = True 
          print (" agree  authorization")
          cookie = self.headers.get("cookie")
          if cookie:
           session_ll = cookie.split("=")[1]
           if session_ll in sessions:
            username = sessions[session_ll]
+           session_id = session_ll
            print ("session valid")
            session_ok = True
-          else:
-           session_id = str (random.randint(100000 , 999999))
-           sessions[session_id] = now[0]
-           session_ok = True
-           print ("new seesion created")
+          else: 
+           session_ok = False
+           print ("session invalid")
          else:
           session_id = str (random.randint(100000 , 999999))
           sessions[session_id] = now[0]
@@ -84,18 +88,21 @@ class H(AHandler):
          else:
           print ("no page in params")
           page_ok = False
-         if q_ok and page_ok and session_ok:
-          self.send_response(200)
-          self.send_header("content-type" , "text/html")
-          self.send_header("set-cookie" , "session_id=" + session_ll)
-          self.end_headers()
-          self.wfile.write("request processed successfully".encode())
+        else:
+         auth_ok = False
+         print ("authorization invalid")
+        if q_ok and page_ok and session_ok and auth_ok:
+         self.send_response(200)
+         self.send_header("content-type" , "text/html")
+         self.send_header("set-cookie" , "session_id=" + session_id)
+         self.end_headers()
+         self.wfile.write("request processed successfully".encode())
         else:
          self.send_response(401)
          self.send_header("content-type" ,"text/html")
          self.end_headers()
-         self.wfile.write("no authorization".encode())
-         print ("not agree authorization")
+         self.wfile.write("request rejected".encode())
+         print ("request rejected")
 server = EServer(("127.0.0.1",8080),H)
 server.serve_forever()
         
