@@ -48,15 +48,23 @@ class H(AHandler):
          print (" agree  authorization")
          cookie = self.headers.get("cookie")
          if cookie:
-          session_ll = cookie.split("=")[1]
-          if session_ll in sessions:
-           username = sessions[session_ll]
-           session_id = session_ll
-           print ("session valid")
-           session_ok = True
-          else: 
-           session_ok = False
-           print ("session invalid")
+          session_ll = cookie.split(";")
+          session_count = 0
+          for item in session_ll:
+           item = item.strip()
+           if item.startswith("session_id="):
+             session_count += 1
+             session_ll = item.split("=")[1]
+             if session_ll in sessions:
+              username = sessions[session_ll]
+              session_id = session_ll
+              print ("session valid")
+              session_ok = True
+             else: 
+              session_ok = False
+              print ("session invalid")
+          if session_count != 1:
+           session_ok = False    
          else:
           session_id = str (random.randint(100000 , 999999))
           sessions[session_id] = now[0]
