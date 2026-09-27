@@ -30,21 +30,39 @@ class H(GhostHandler):
         print (self.path)
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
+        value_ok = False
+        id_ok = False
         if "id" in params:
          user_id = params["id"][0]
+         id_ok = True
+         try:
+          user_id = int (user_id)
+          value_ok = True
+         except ValueError:
+          value_ok = False
+          print ("invalid id") 
          print ("id in params")
-         cursor.execute(" SELECT id FROM users WHERE id =?",
-         (user_id,)
-         )
-         eminem = cursor.fetchone()
-         if eminem:
-          print ("id already exists")
+         if value_ok:
+          query = " SELECT id FROM users WHERE id =? "
+          cursor.execute(query, (user_id,))
+          print (user_id)
+          print (query)
          else:
-          cursor.execute(""" INSERT INTO users
-          (username , password) VALUES (? , ?)
-          """,("mehra" , "5555"))
-          conne.commit()
+          print ("value dont ok")
+         eminem = cursor.fetchone()
+         print (eminem)
         else:
          print ("id not in params")
+         id_ok = False
+        if id_ok and value_ok:
+         self.send_response(200)
+         self.send_header("content-type" , "text/html")
+         self.end_headers()
+         self.wfile.write("request accept".encode())
+        else:
+         self.send_response(400)
+         self.send_header("content-type" , "text/html")
+         self.end_headers()
+         self.wfile.write("bad request".encode())
 server = MehraServer(("127.0.0.1",8081),H)
 server.serve_forever()
